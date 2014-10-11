@@ -28,7 +28,7 @@ class Sequencer(threading.Thread):
 
 	def remove_pattern(self,pat_id):
 		self.lock.acquire()
-		self.remove_pattern_unsafe()
+		self.remove_pattern_unsafe(pat_id)
 		self.lock.release()
 
 	def remove_pattern_unsafe(self,pat_id):
