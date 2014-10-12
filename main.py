@@ -25,7 +25,7 @@ class Slot:
     def __init__(self,pattern):
         self.pat = pattern
         self.controls = [Control(c) for c in pattern.controls]
-        self.alpha = 1.
+        self.alpha_control = Control('alpha')
         self.ui = ui.Pattern(self)
 
     def update_pattern(self,t):
@@ -35,6 +35,7 @@ class Slot:
         self.ui.render(surf,pos)
 
 slots = [None]*8
+patterns = [patterns.Full,patterns.Segment,patterns.Wave]
 
 d = device.PrintDevice()
 
@@ -53,7 +54,7 @@ while go:
     for slot in slots:
         if slot is not None:
             slot.update_pattern(t)
-            frames.append((slot.frame,slot.alpha))
+            frames.append((slot.frame,slot.alpha_control.value))
 
     frame = compositor.composite(frames)
 

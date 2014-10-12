@@ -37,14 +37,23 @@ class Wave:
         'velocity'
     ]
 
+    def __init__(self):
+        self.lt=0
+        self.x=0
+
     def render(self,t,color,frequency,velocity):
         def f(x):
             return (math.sin(x*2*math.pi)+1)/2
 
         (r,g,b)=mkcolor(color)
         strip=[]
+        dt=t-self.lt
+        self.lt=t
+        fr=frequency*10
+        self.x+=dt*velocity*4*fr
         for i in range(lightstrip.STRIP_LENGTH):
             d=float(i)/lightstrip.STRIP_LENGTH
-            a=f((d+t*velocity*4)*frequency*10)
+            a=f(d*fr+self.x)
             strip.append((r,g,b,a))
         return strip
+
