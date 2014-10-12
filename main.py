@@ -17,9 +17,32 @@ class Control:
     def __init__(self,name,value=0.0):
         self.name=name
         self.value=value
+        self.knob=None
 
     def to_pair(self):
         return (self.name,self.value)
+
+    def set_knob(self,knob):
+        if self.knob is not None:
+            self.knob.del_control(self)
+        if knob is not None:
+            knob.add_control(self)
+        self.knob=knob
+
+class Knob:
+    def __init__(self,name):
+        self.name=name
+        self.controls=set()
+
+    def add_control(self,control):
+        self.controls.add(control)
+
+    def del_control(self,control):
+        self.controls.remove(control)
+
+    def update(self,value):
+        for c in self.controls:
+            c.value=value
 
 class Slot:
     def __init__(self,pattern):
@@ -45,13 +68,18 @@ class BankPattern:
     def make(self):
         return Slot(self.pat())
 
-slots = [None]*8
 bank = [BankPattern(p) for p in [patterns.Full,patterns.Segment,patterns.Wave]]
+slots = [None]*8
+
+env=[Knob(n) for n in ('env','hi','mid','low')]
+nanokontrol_knobs=[Knob('NK'+str(i)) for i in range(len(slots))]
+
+def knobs(slot):
+    return [None]+[nanokontrol_knobs[slot]]+env
 
 d = device.PrintDevice()
 
-
-interface=ui.UI(screen,bank,slots)
+interface=ui.UI(screen,bank,slots,knobs)
 
 while go:
     framerate.tick(60)

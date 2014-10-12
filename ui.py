@@ -63,19 +63,34 @@ class Slider(Element):
     SIZE=(60,40)
 
     SLIDER_LENGTH=54
-    SLIDER_THICKNESS=16
+    SLIDER_THICKNESS=10
 
-    def __init__(self,control):
+    KNOB_POS=(5,15)
+    KNOB_SIZE=(50,15)
+
+    def __init__(self,control,knobs=[None]):
         Element.__init__(self)
         self.control=control
         self.slot_drag_start=None
         self.value_start=None
+        self.knobs=knobs
+        self.knob_index=0
 
-        font = pygame.font.Font(None, 15)
-        self.text = font.render(self.control.name, 1, (255, 255, 255))
+        self.font = pygame.font.Font(None, 15)
+        self.text = self.font.render(self.control.name, 1, (255, 255, 255))
+
+        self.update_knob()
+
+    def update_knob(self):
+        if self.knob_index >= len(self.knobs):
+            self.knob_index = 0
+
+        self.control.set_knob(self.knobs[self.knob_index])
+        if self.control.knob is not None:
+            self.knob_name=self.font.render(self.control.knob.name,1,(255,255,255))
 
     def handle_rect(self):
-        return (3+self.control.value*(self.SLIDER_LENGTH-self.SLIDER_THICKNESS),18,self.SLIDER_THICKNESS,16)
+        return (3+self.control.value*(self.SLIDER_LENGTH-self.SLIDER_THICKNESS),28,self.SLIDER_THICKNESS,10)
 
     def mouse_to_value(self,(x,y)):
         v=self.value_start+float(x)/(self.SLIDER_LENGTH-self.SLIDER_THICKNESS)
@@ -86,17 +101,27 @@ class Slider(Element):
         self.surf.fill((0,0,0))
         self.surf.blit(self.text,(5,2))
 
-        pygame.draw.rect(self.surf,(20,20,20),(3,25,self.SLIDER_LENGTH,3))
+        knob=self.knobs[self.knob_index]
+        if knob is not None:
+            self.surf.blit(self.knob_name,self.KNOB_POS)
+
+        pygame.draw.rect(self.surf,(20,20,20),(3,32,self.SLIDER_LENGTH,3))
         pygame.draw.rect(self.surf,(0,0,60),self.handle_rect())
 
     def mouse(self,relpos,event):
         if event.type==pygame.MOUSEBUTTONUP:
             self.slot_drag_start=None
             return False
-        if event.type==pygame.MOUSEBUTTONDOWN and in_rect(relpos,self.handle_rect()):
-            self.slot_drag_start=relpos
-            self.value_start=self.control.value
-            return True
+        if event.type==pygame.MOUSEBUTTONDOWN:
+            if in_rect(relpos,self.KNOB_POS+self.KNOB_SIZE):
+                self.knob_index+=1
+                if self.knob_index>=len(self.knobs):
+                    self.knob_index=0
+                self.update_knob()
+            if in_rect(relpos,self.handle_rect()):
+                self.slot_drag_start=relpos
+                self.value_start=self.control.value
+                return True
         if self.slot_drag_start is not None and event.type==pygame.MOUSEMOTION:
             self.mouse_to_value(sub_pos(relpos,self.slot_drag_start))
             return True
@@ -118,6 +143,7 @@ class Pattern(Element):
         self.slot=slot
         self.uiframe=Frame()
         self.sliders=[]
+
         for control in slot.controls:
             self.sliders.append(Slider(control))
         self.alpha_slider=Slider(slot.alpha_control)
@@ -159,13 +185,14 @@ class UI(Element):
     BANK_START=(100,420)
     BANK_INC=(150,0)
 
-    def __init__(self,screen,bank,slots):
+    def __init__(self,screen,bank,slots,knobs):
         self.surf=screen
         self.slots=slots
         self.bank=bank
         self.master=Frame()
         self.slot_drag_start=None
         self.bank_drag_start=None
+        self.knobs=knobs
 
     def draw(self):
         self.master.render(self.surf,(30,100))
@@ -184,6 +211,13 @@ class UI(Element):
         elif self.bank_drag_start is not None:
                 self.bank[self.drag_index].render(self.surf,add_pos(element_array(self.BANK_START,self.BANK_INC,self.drag_index),self.drag_pos))
 
+    def update_knobs(self,slot):
+        if self.slots[slot] is not None:
+            knobs=self.knobs(slot)
+            for slider in self.slots[slot].ui.sliders:
+                slider.knobs=knobs
+                slider.update_knob()
+
     def render(self):
         self.surf.fill((0,0,0))
         self.draw()
@@ -193,6 +227,8 @@ class UI(Element):
         temp=self.slots[to]
         self.slots[to]=self.slots[fr]
         self.slots[fr]=temp
+        self.update_knobs(fr)
+        self.update_knobs(to)
 
     def handle_slot_drag(self,(x,y)):
         if x < -self.SLOT_INC[0]/2 and self.drag_index > 0:
@@ -214,6 +250,7 @@ class UI(Element):
             corner=element_array(self.SLOT_START,self.SLOT_INC,i)
             if in_rect((x,y),corner+Pattern.SIZE):
                 self.slots[i]=self.bank[self.drag_index].make()
+                self.update_knobs(i)
                 break
 
     def mouse(self,relpos,event):
@@ -251,6 +288,8 @@ class UI(Element):
                 corner=element_array(self.SLOT_START,self.SLOT_INC,i)
                 corner=add_pos(corner,Pattern.EJECT)
                 if self.slots[i] is not None and in_rect(relpos,corner+Pattern.EJECT_SIZE):
+                    for slider in self.slots[i].ui.sliders:
+                        slider.control.set_knob(None)
                     self.slots[i]=None
                     return True
 
@@ -273,4 +312,3 @@ class UI(Element):
                     return True
 
         return False
-
