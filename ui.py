@@ -48,6 +48,17 @@ class Frame(Element):
                 c = (ca[0]*ca[3]*255,ca[1]*ca[3]*255,ca[2]*ca[3]*255)
             pygame.draw.rect(self.surf,c,(1,1+i*4,3,3))
 
+class BankPattern(Element):
+    SIZE=(130,30)
+
+    def __init__(self,bp):
+        Element.__init__(self)
+        self.bp=bp
+        self.surf.fill((20,20,20))
+        font = pygame.font.Font(None, 25)
+        text = font.render(self.bp.pat.name, 1, (255, 255, 255))
+        self.surf.blit(text,(5,2))
+
 class Slider(Element):
     SIZE=(60,40)
 
@@ -57,8 +68,11 @@ class Slider(Element):
     def __init__(self,control):
         Element.__init__(self)
         self.control=control
-        self.drag_start=None
+        self.slot_drag_start=None
         self.value_start=None
+
+        font = pygame.font.Font(None, 15)
+        self.text = font.render(self.control.name, 1, (255, 255, 255))
 
     def handle_rect(self):
         return (3+self.control.value*(self.SLIDER_LENGTH-self.SLIDER_THICKNESS),18,self.SLIDER_THICKNESS,16)
@@ -70,33 +84,34 @@ class Slider(Element):
 
     def draw(self):
         self.surf.fill((0,0,0))
-        font = pygame.font.Font(None, 15)
-        text = font.render(self.control.name, 1, (255, 255, 255))
-        self.surf.blit(text,(5,2))
+        self.surf.blit(self.text,(5,2))
 
         pygame.draw.rect(self.surf,(20,20,20),(3,25,self.SLIDER_LENGTH,3))
         pygame.draw.rect(self.surf,(0,0,60),self.handle_rect())
 
     def mouse(self,relpos,event):
         if event.type==pygame.MOUSEBUTTONUP:
-            self.drag_start=None
+            self.slot_drag_start=None
             return False
         if event.type==pygame.MOUSEBUTTONDOWN and in_rect(relpos,self.handle_rect()):
-            self.drag_start=relpos
+            self.slot_drag_start=relpos
             self.value_start=self.control.value
             return True
-        if self.drag_start is not None and event.type==pygame.MOUSEMOTION:
-            self.mouse_to_value(sub_pos(relpos,self.drag_start))
+        if self.slot_drag_start is not None and event.type==pygame.MOUSEMOTION:
+            self.mouse_to_value(sub_pos(relpos,self.slot_drag_start))
             return True
         return False
 
 class Pattern(Element):
     SIZE=(100,300)
 
-    SLIDER_START=(20,20)
+    SLIDER_START=(20,30)
     SLIDER_INC=(0,50)
 
     ALPHA_SLIDER_POS=(10,240)
+
+    EJECT=(85,10)
+    EJECT_SIZE=(10,10)
 
     def __init__(self,slot):
         Element.__init__(self)
@@ -107,8 +122,13 @@ class Pattern(Element):
             self.sliders.append(Slider(control))
         self.alpha_slider=Slider(slot.alpha_control)
 
+        font = pygame.font.Font(None, 15)
+        self.text = font.render(self.slot.pat.name, 1, (255, 255, 255))
+
     def draw(self):
         self.surf.fill((20,20,20))
+
+        self.surf.blit(self.text,(5,5))
 
         self.uiframe.frame=self.slot.frame
         self.uiframe.render(self.surf,(10,30))
@@ -117,6 +137,9 @@ class Pattern(Element):
             self.sliders[i].render(self.surf,element_array(self.SLIDER_START,self.SLIDER_INC,i))
 
         self.alpha_slider.render(self.surf,self.ALPHA_SLIDER_POS)
+
+        pygame.draw.line(self.surf,(255,255,255),(self.EJECT[0],self.EJECT[1]),(self.EJECT[0]+self.EJECT_SIZE[0],self.EJECT[1]+self.EJECT_SIZE[1]))
+        pygame.draw.line(self.surf,(255,255,255),(self.EJECT[0]+self.EJECT_SIZE[0],self.EJECT[1]),(self.EJECT[0],self.EJECT[1]+self.EJECT_SIZE[1]))
 
     def mouse(self,relpos,event):
         for i in range(len(self.sliders)):
@@ -133,53 +156,89 @@ class UI(Element):
     SLOT_START=(100,100)
     SLOT_INC=(110,0)
 
-    def __init__(self,screen,slots):
+    BANK_START=(100,420)
+    BANK_INC=(150,0)
+
+    def __init__(self,screen,bank,slots):
         self.surf=screen
         self.slots=slots
+        self.bank=bank
         self.master=Frame()
-        self.drag_start=None
+        self.slot_drag_start=None
+        self.bank_drag_start=None
 
     def draw(self):
         self.master.render(self.surf,(30,100))
         for i in range(len(self.slots)):
-            if self.slots[i] is not None and (self.drag_start is None or i != self.drag_pat):
+            if self.slots[i] is not None and (self.slot_drag_start is None or i != self.drag_index):
                 self.slots[i].render(self.surf,element_array(self.SLOT_START,self.SLOT_INC,i))
+            else:
+                pygame.draw.rect(self.surf,(20,20,20),element_array(self.SLOT_START,self.SLOT_INC,i)+Pattern.SIZE,1)
 
-        if self.drag_start is not None:
-                self.slots[self.drag_pat].render(self.surf,add_pos(element_array(self.SLOT_START,self.SLOT_INC,self.drag_pat),self.drag_pos))
+        for i in range(len(self.bank)):
+            self.bank[i].render(self.surf,element_array(self.BANK_START,self.BANK_INC,i))
+
+        if self.slot_drag_start is not None:
+                self.slots[self.drag_index].render(self.surf,add_pos(element_array(self.SLOT_START,self.SLOT_INC,self.drag_index),self.drag_pos))
+
+        elif self.bank_drag_start is not None:
+                self.bank[self.drag_index].render(self.surf,add_pos(element_array(self.BANK_START,self.BANK_INC,self.drag_index),self.drag_pos))
 
     def render(self):
         self.surf.fill((0,0,0))
         self.draw()
         pygame.display.update()
 
-    def pat_move(self,fr,to):
+    def slot_move(self,fr,to):
         temp=self.slots[to]
         self.slots[to]=self.slots[fr]
         self.slots[fr]=temp
 
-    def handle_drag(self,(x,y)):
-        if x < -self.SLOT_INC[0]/2 and self.drag_pat > 0:
-            self.pat_move(self.drag_pat,self.drag_pat-1)
-            self.drag_pat -= 1
-            self.drag_start = sub_pos(self.drag_start,self.SLOT_INC)
+    def handle_slot_drag(self,(x,y)):
+        if x < -self.SLOT_INC[0]/2 and self.drag_index > 0:
+            self.slot_move(self.drag_index,self.drag_index-1)
+            self.drag_index -= 1
+            self.slot_drag_start = sub_pos(self.slot_drag_start,self.SLOT_INC)
             self.drag_pos = add_pos((x,y),self.SLOT_INC)
             return
-        if x > self.SLOT_INC[0]/2 and self.drag_pat < len(self.slots)-1:
-            self.pat_move(self.drag_pat,self.drag_pat+1)
-            self.drag_pat += 1
-            self.drag_start = add_pos(self.drag_start,self.SLOT_INC)
+        if x > self.SLOT_INC[0]/2 and self.drag_index < len(self.slots)-1:
+            self.slot_move(self.drag_index,self.drag_index+1)
+            self.drag_index += 1
+            self.slot_drag_start = add_pos(self.slot_drag_start,self.SLOT_INC)
             self.drag_pos = sub_pos((x,y),self.SLOT_INC)
             return
         self.drag_pos=(x,y)
 
-    def mouse(self,relpos,event):
-        if self.drag_start is not None and event.type==pygame.MOUSEMOTION:
-            self.handle_drag(sub_pos(relpos,self.drag_start))
-            return True
-        if self.drag_start is not None and event.type==pygame.MOUSEBUTTONUP:
-            self.drag_start=None
+    def handle_bank_drop(self,(x,y)):
+        for i in range(len(self.slots)):
+            corner=element_array(self.SLOT_START,self.SLOT_INC,i)
+            if in_rect((x,y),corner+Pattern.SIZE):
+                self.slots[i]=self.bank[self.drag_index].make()
+                break
 
+    def mouse(self,relpos,event):
+        if event.type==pygame.MOUSEMOTION:
+            # slot move
+            if self.slot_drag_start is not None:
+                self.handle_slot_drag(sub_pos(relpos,self.slot_drag_start))
+                return True
+
+            # bank move
+            if self.bank_drag_start is not None:
+                self.drag_pos=sub_pos(relpos,self.bank_drag_start)
+                return True
+
+        if event.type==pygame.MOUSEBUTTONUP:
+            # slot drop
+            if self.slot_drag_start is not None:
+                self.slot_drag_start=None
+
+            # bank drop
+            if self.bank_drag_start is not None:
+                self.handle_bank_drop(relpos)
+                self.bank_drag_start=None
+
+        # child
         for i in range(len(self.slots)):
             corner=element_array(self.SLOT_START,self.SLOT_INC,i)
             if self.slots[i] is not None:
@@ -187,12 +246,31 @@ class UI(Element):
                     return True
 
         if event.type==pygame.MOUSEBUTTONDOWN:
+            # eject
+            for i in range(len(self.slots)):
+                corner=element_array(self.SLOT_START,self.SLOT_INC,i)
+                corner=add_pos(corner,Pattern.EJECT)
+                if self.slots[i] is not None and in_rect(relpos,corner+Pattern.EJECT_SIZE):
+                    self.slots[i]=None
+                    return True
+
+            # slot drag
             for i in range(len(self.slots)):
                 corner=element_array(self.SLOT_START,self.SLOT_INC,i)
                 if self.slots[i] is not None and in_rect(relpos,corner+Pattern.SIZE):
-                    self.drag_start=relpos
+                    self.slot_drag_start=relpos
                     self.drag_pos=(0,0)
-                    self.drag_pat=i
+                    self.drag_index=i
                     return True
+
+            # bank drag
+            for i in range(len(self.bank)):
+                corner=element_array(self.BANK_START,self.BANK_INC,i)
+                if in_rect(relpos,corner+BankPattern.SIZE):
+                    self.bank_drag_start=relpos
+                    self.drag_pos=(0,0)
+                    self.drag_index=i
+                    return True
+
         return False
 

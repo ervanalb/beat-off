@@ -6,6 +6,7 @@ def mkcolor(h,s=1.,v=1.):
     return colorsys.hsv_to_rgb(h,s,v)
 
 class Full:
+    name='full'
     controls=[
         'color'
     ]
@@ -16,6 +17,7 @@ class Full:
         return strip
 
 class Segment:
+    name='segment'
     controls=[
         'color',
         'start',
@@ -31,6 +33,7 @@ class Segment:
         return strip
 
 class Wave:
+    name='wave'
     controls=[
         'color',
         'frequency',

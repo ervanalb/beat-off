@@ -34,16 +34,24 @@ class Slot:
     def render(self,surf,pos):
         self.ui.render(surf,pos)
 
+class BankPattern:
+    def __init__(self,pattern_cls):
+        self.pat=pattern_cls
+        self.ui=ui.BankPattern(self)
+
+    def render(self,surf,pos):
+        self.ui.render(surf,pos)
+
+    def make(self):
+        return Slot(self.pat())
+
 slots = [None]*8
-patterns = [patterns.Full,patterns.Segment,patterns.Wave]
+bank = [BankPattern(p) for p in [patterns.Full,patterns.Segment,patterns.Wave]]
 
 d = device.PrintDevice()
 
-slots[0]=Slot(patterns.Full())
-slots[1]=Slot(patterns.Segment())
-slots[2]=Slot(patterns.Wave())
 
-ui=ui.UI(screen,slots)
+interface=ui.UI(screen,bank,slots)
 
 while go:
     framerate.tick(60)
@@ -58,11 +66,11 @@ while go:
 
     frame = compositor.composite(frames)
 
-    ui.master.frame=frame
+    interface.master.frame=frame
 
     d.render(frame)
 
-    ui.render()
+    interface.render()
 
     pygame.display.update()
 
@@ -71,5 +79,5 @@ while go:
             go = False
         if event.type in [pygame.MOUSEBUTTONUP,pygame.MOUSEBUTTONDOWN,pygame.MOUSEMOTION]:
             relpos=event.pos
-            ui.mouse(relpos,event)
+            interface.mouse(relpos,event)
 
