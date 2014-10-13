@@ -6,6 +6,7 @@ import lightstrip
 import ui
 import time
 import nanokontrol
+import audio
 
 pygame.init()
 pygame.midi.init()
@@ -18,6 +19,8 @@ go = True
 nk2=nanokontrol.NanoKontrol2()
 nk_knob_map={'Knob0':0,'Knob1':1,'Knob2':2,'Knob3':3,'Knob4':4,'Knob5':5,'Knob6':6,'Knob7':7}
 nk_slider_map={'Slider0':0,'Slider1':1,'Slider2':2,'Slider3':3,'Slider4':4,'Slider5':5,'Slider6':6,'Slider7':7}
+
+ah=audio.AudioHandler()
 
 class Control:
     def __init__(self,name,value=0.0):
@@ -77,12 +80,15 @@ class BankPattern:
 bank = [BankPattern(p) for p in [patterns.Full,patterns.Segment,patterns.Wave]]
 slots = [None]*8
 
-env=[Knob(n) for n in ('env','hi','mid','low')]
+lo=Knob('lo')
+mid=Knob('mid')
+hi=Knob('hi')
+glob=[lo,mid,hi]
 nk_knobs=[Knob('NK '+str(i)) for i in range(len(slots))]
 nk_sliders=[Knob('NK S '+str(i)) for i in range(len(slots))]
 
 def knobs(slot):
-    return [None]+[nk_knobs[slot]]+env
+    return [None]+[nk_knobs[slot]]+glob
 
 def alpha_knobs(slot):
     return [nk_sliders[slot]]
@@ -90,6 +96,8 @@ def alpha_knobs(slot):
 d = device.PrintDevice()
 
 interface=ui.UI(screen,bank,slots,knobs,alpha_knobs)
+
+ah.start()
 
 while go:
     framerate.tick(60)
@@ -118,6 +126,10 @@ while go:
         if k in nk_slider_map:
             nk_sliders[nk_slider_map[k]].update(v)
 
+    lo.update(ah.lo)
+    mid.update(ah.mid)
+    hi.update(ah.hi)
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             go = False
@@ -125,3 +137,4 @@ while go:
             relpos=event.pos
             interface.mouse(relpos,event)
 
+ah.stop()
