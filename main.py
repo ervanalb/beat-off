@@ -5,13 +5,19 @@ import compositor
 import lightstrip
 import ui
 import time
+import nanokontrol
 
 pygame.init()
+pygame.midi.init()
 
 screen=ui.init()
 
 framerate = pygame.time.Clock()
 go = True
+
+nk2=nanokontrol.NanoKontrol2()
+nk_knob_map={'Knob0':0,'Knob1':1,'Knob2':2,'Knob3':3,'Knob4':4,'Knob5':5,'Knob6':6,'Knob7':7}
+nk_slider_map={'Slider0':0,'Slider1':1,'Slider2':2,'Slider3':3,'Slider4':4,'Slider5':5,'Slider6':6,'Slider7':7}
 
 class Control:
     def __init__(self,name,value=0.0):
@@ -72,14 +78,18 @@ bank = [BankPattern(p) for p in [patterns.Full,patterns.Segment,patterns.Wave]]
 slots = [None]*8
 
 env=[Knob(n) for n in ('env','hi','mid','low')]
-nanokontrol_knobs=[Knob('NK'+str(i)) for i in range(len(slots))]
+nk_knobs=[Knob('NK '+str(i)) for i in range(len(slots))]
+nk_sliders=[Knob('NK S '+str(i)) for i in range(len(slots))]
 
 def knobs(slot):
-    return [None]+[nanokontrol_knobs[slot]]+env
+    return [None]+[nk_knobs[slot]]+env
+
+def alpha_knobs(slot):
+    return [nk_sliders[slot]]
 
 d = device.PrintDevice()
 
-interface=ui.UI(screen,bank,slots,knobs)
+interface=ui.UI(screen,bank,slots,knobs,alpha_knobs)
 
 while go:
     framerate.tick(60)
@@ -101,6 +111,12 @@ while go:
     interface.render()
 
     pygame.display.update()
+
+    for (k,v) in nk2.get_events():
+        if k in nk_knob_map:
+            nk_knobs[nk_knob_map[k]].update(v)
+        if k in nk_slider_map:
+            nk_sliders[nk_slider_map[k]].update(v)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:

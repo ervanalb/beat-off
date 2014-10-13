@@ -185,7 +185,7 @@ class UI(Element):
     BANK_START=(100,420)
     BANK_INC=(150,0)
 
-    def __init__(self,screen,bank,slots,knobs):
+    def __init__(self,screen,bank,slots,knobs,alpha_knobs):
         self.surf=screen
         self.slots=slots
         self.bank=bank
@@ -193,6 +193,7 @@ class UI(Element):
         self.slot_drag_start=None
         self.bank_drag_start=None
         self.knobs=knobs
+        self.alpha_knobs=alpha_knobs
 
     def draw(self):
         self.master.render(self.surf,(30,100))
@@ -217,6 +218,10 @@ class UI(Element):
             for slider in self.slots[slot].ui.sliders:
                 slider.knobs=knobs
                 slider.update_knob()
+
+            slider=self.slots[slot].ui.alpha_slider
+            slider.knobs=self.alpha_knobs(slot)
+            slider.update_knob()
 
     def render(self):
         self.surf.fill((0,0,0))
@@ -290,6 +295,7 @@ class UI(Element):
                 if self.slots[i] is not None and in_rect(relpos,corner+Pattern.EJECT_SIZE):
                     for slider in self.slots[i].ui.sliders:
                         slider.control.set_knob(None)
+                    self.slots[i].ui.alpha_slider.control.set_knob(None)
                     self.slots[i]=None
                     return True
 
