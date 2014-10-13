@@ -27,7 +27,7 @@ class Segment:
     def render(self,t,color,start,stop):
         (r,g,b)=mkcolor(color)
         strip=[(0,0,0,0)]*lightstrip.STRIP_LENGTH
-        ends=(int(start*lightstrip.STRIP_LENGTH),int(stop*lightstrip.STRIP_LENGTH))
+        ends=(int(start*lightstrip.STRIP_LENGTH),int((1.-stop)*lightstrip.STRIP_LENGTH))
         for i in range(min(ends),max(ends)):
             strip[i]=(r,g,b,1)
         return strip
@@ -58,5 +58,34 @@ class Wave:
             d=float(i)/lightstrip.STRIP_LENGTH
             a=f(d*fr+self.x)
             strip.append((r,g,b,a))
+        return strip
+
+class Strobe:
+    name='strobe'
+    controls=[
+        'color',
+        'frequency',
+        'up',
+        'down',
+    ]
+
+    def __init__(self):
+        self.lt=0
+
+    def render(self,t,color,frequency,up,down):
+        period=.5
+        (r,g,b)=mkcolor(color)
+        if t>=self.lt+period:
+            strip=[(r,g,b,1)]*lightstrip.STRIP_LENGTH
+            self.lt=math.floor(t/period)*period
+        else:
+            nt=(math.ceil(t/period)*period-t)/period
+            pt=(t-math.floor(t/period)*period)/period
+            a=0
+            if up > 0 and nt < up:
+                a+=1-nt/up
+            if down > 0 and pt < down:
+                a+=1-pt/down
+            strip=[(r,g,b,a)]*lightstrip.STRIP_LENGTH
         return strip
 

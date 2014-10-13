@@ -28,7 +28,7 @@ class AudioHandler(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
-        daemon=True
+        self.daemon=True
         self.pa=pyaudio.PyAudio()
 
         self.in_stream = self.pa.open(

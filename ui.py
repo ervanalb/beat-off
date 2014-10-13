@@ -114,8 +114,11 @@ class Slider(Element):
             return False
         if event.type==pygame.MOUSEBUTTONDOWN:
             if in_rect(relpos,self.KNOB_POS+self.KNOB_SIZE):
-                self.knob_index+=1
-                if self.knob_index>=len(self.knobs):
+                if event.button == 1:
+                    self.knob_index+=1
+                    if self.knob_index>=len(self.knobs):
+                        self.knob_index=0
+                elif event.button == 3:
                     self.knob_index=0
                 self.update_knob()
             if in_rect(relpos,self.handle_rect()):
