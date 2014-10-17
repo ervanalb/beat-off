@@ -20,18 +20,24 @@ nk2=nanokontrol.NanoKontrol2()
 nk_knob_map={'Knob0':0,'Knob1':1,'Knob2':2,'Knob3':3,'Knob4':4,'Knob5':5,'Knob6':6,'Knob7':7}
 nk_slider_map={'Slider0':0,'Slider1':1,'Slider2':2,'Slider3':3,'Slider4':4,'Slider5':5,'Slider6':6,'Slider7':7}
 
-pattern_bank=[patterns.Full,patterns.Segment,patterns.Wave,patterns.Strobe]
+pattern_bank=[patterns.Full,patterns.Segment,patterns.Wave,patterns.Strobe, patterns.Bounce]
 
 ah=audio.AudioHandler()
 
 class Control:
-    def __init__(self,name,value=0.0):
+    def __init__(self,name,value=0.0, map_fn=None, display_fn=None):
         self.name=name
         self.value=value
         self.knob=None
+        nop = lambda x: x
+        self.map_fn = map_fn or nop
+        self.display_fn = display_fn or nop
 
     def to_pair(self):
-        return (self.name,self.value)
+        return (self.name, self.map_fn(self.value))
+
+    def display_value(self):
+        return self.display_fn(self.value)
 
     def set_knob(self,knob):
         if self.knob is not None:
@@ -55,13 +61,19 @@ class Knob:
         for c in self.controls:
             c.value=value
 
+
 class Slot:
     def __init__(self,pattern):
         self.pat = pattern
-        self.controls = [Control(c) for c in pattern.controls]
+        nop = lambda x: x
+        self.controls = []
+        for control in pattern.controls:
+            map_fn = getattr(pattern, "map_{}".format(control), nop)
+            display_fn = getattr(pattern, "display_{}".format(control), nop)
+            initial = getattr(pattern, "initial_{}".format(control), 0.0)
+            self.controls.append(Control(control, value=initial, map_fn=map_fn, display_fn=display_fn))
         self.alpha_control = Control('alpha')
         self.ui = ui.Pattern(self)
-
     def update_pattern(self,t):
         self.frame=self.pat.render(t,**dict([c.to_pair() for c in self.controls]))
 

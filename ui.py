@@ -59,6 +59,7 @@ class BankPattern(Element):
         text = font.render(self.bp.pat.name, 1, (255, 255, 255))
         self.surf.blit(text,(5,2))
 
+
 class Slider(Element):
     SIZE=(60,40)
 
@@ -68,13 +69,17 @@ class Slider(Element):
     KNOB_POS=(5,15)
     KNOB_SIZE=(50,15)
 
-    def __init__(self,control,knobs=[None]):
+    def __init__(self,control,knobs=[None], map_fn=None, display_fn=None):
         Element.__init__(self)
         self.control=control
         self.slot_drag_start=None
         self.value_start=None
         self.knobs=knobs
         self.knob_index=0
+        nop = lambda x: x
+        # Not great, should test `is None` of `map_fn`, but fns are always truthy
+        self.map_fn = map_fn or nop 
+        self.display_fn = display_fn or nop 
 
         self.font = pygame.font.Font(None, 15)
         self.text = self.font.render(self.control.name, 1, (255, 255, 255))
