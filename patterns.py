@@ -127,21 +127,29 @@ class Strobe(object):
 
     def __init__(self):
         self.lt=0
+        self.lx=0
+        self.x=0
 
     def render(self,t,color,frequency,up,down):
-        period=.5
+        dt=t-self.lt
+        self.lt=t
+        x=self.x+dt*frequency*4
+        period=1
+        self.x=x
+        #print x
+
         (r,g,b)=mkcolor(color)
-        if t>=self.lt+period:
+        if x>=self.lx+period:
             strip=[(r,g,b,1)]*lightstrip.STRIP_LENGTH
-            self.lt=math.floor(t/period)*period
+            self.lx=math.floor(x/period)*period
         else:
-            nt=(math.ceil(t/period)*period-t)/period
-            pt=(t-math.floor(t/period)*period)/period
+            nx=(math.ceil(x/period)*period-x)/period
+            px=(x-math.floor(x/period)*period)/period
             a=0
-            if up > 0 and nt < up:
-                a+=1-nt/up
-            if down > 0 and pt < down:
-                a+=1-pt/down
+            if up > 0 and nx < up:
+                a+=1-nx/up
+            if down > 0 and px < down:
+                a+=1-px/down
             strip=[(r,g,b,a)]*lightstrip.STRIP_LENGTH
         return strip
 

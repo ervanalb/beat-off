@@ -14,16 +14,16 @@ def agc(data,hist,memory):
     small=min(hist)
     large=max(hist)
     if large == small:
-        return 0.5
+        return 0.3
     return (float(data)-small)/(large-small)
 
 class AudioHandler(threading.Thread):
-    CHUNK = 256
+    CHUNK = 1024
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 48000
     RANGES = [(20,200),(200,1200),(1200,2400)]
-    ALPHA = 0.05
+    ALPHA = 0.5
     MEMORY = 2000
 
     def __init__(self):
