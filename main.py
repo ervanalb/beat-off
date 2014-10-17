@@ -16,7 +16,11 @@ screen=ui.init()
 framerate = pygame.time.Clock()
 go = True
 
-nk2=nanokontrol.NanoKontrol2()
+try:
+    nk2=nanokontrol.NanoKontrol2()
+except nanokontrol.NanoKontrol2.NoDeviceException:
+    nk2 = None
+
 nk_knob_map={'Knob0':0,'Knob1':1,'Knob2':2,'Knob3':3,'Knob4':4,'Knob5':5,'Knob6':6,'Knob7':7}
 nk_slider_map={'Slider0':0,'Slider1':1,'Slider2':2,'Slider3':3,'Slider4':4,'Slider5':5,'Slider6':6,'Slider7':7}
 
@@ -134,11 +138,12 @@ while go:
 
     pygame.display.update()
 
-    for (k,v) in nk2.get_events():
-        if k in nk_knob_map:
-            nk_knobs[nk_knob_map[k]].update(v)
-        if k in nk_slider_map:
-            nk_sliders[nk_slider_map[k]].update(v)
+    if nk2 is not None:
+        for (k,v) in nk2.get_events():
+            if k in nk_knob_map:
+                nk_knobs[nk_knob_map[k]].update(v)
+            if k in nk_slider_map:
+                nk_sliders[nk_slider_map[k]].update(v)
 
     lo.update(ah.lo)
     mid.update(ah.mid)

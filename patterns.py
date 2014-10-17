@@ -3,7 +3,16 @@ import colorsys
 import math
 
 def mkcolor(h,s=1.,v=1.):
-    return colorsys.hsv_to_rgb(h,s,v)
+    return mk_yiq_color(h)
+    #return colorsys.hsv_to_rgb(h,s,v)
+
+def mk_yiq_color(phi, y=0.4, kappa=1.9):
+    sign = lambda x: -1 if x < 0 else 1
+    phi *= math.pi * 2
+    s, c = math.sin(phi), math.cos(phi)
+    i = abs(s) ** kappa * sign(s)
+    q = abs(c) ** kappa * sign(c)
+    return colorsys.yiq_to_rgb(y, i * 0.595, q * 0.522)
 
 class Full(object):
     name='full'

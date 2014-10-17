@@ -24,6 +24,9 @@ input_map={
 
 class NanoKontrol2(object):
     MAX_EVENTS = 100
+    class NoDeviceException(Exception):
+        pass
+
     def __init__(self):
         input_dev_id=None
         output_dev_id=None
@@ -36,7 +39,7 @@ class NanoKontrol2(object):
             if outp: 
                 output_dev_id = dev
         if input_dev_id is None or output_dev_id is None:
-            raise Exception("Could not find NanoKontrol2!")
+            raise NanoKontrol2.NoDeviceException("Could not find NanoKontrol2!")
 
         self.input_dev=pygame.midi.Input(input_dev_id)
         self.output_dev=pygame.midi.Output(output_dev_id)
