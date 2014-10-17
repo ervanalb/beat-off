@@ -111,7 +111,12 @@ def knobs(slot):
 def alpha_knobs(slot):
     return [nk_sliders[slot]]
 
-d = device.PrintDevice()
+devices = []
+for i in range(10):
+    try:
+        d = device.LuxDevice("/dev/ttyUSB%d" % i)
+    except:
+        pass
 
 interface=ui.UI(screen,bank,slots,knobs,alpha_knobs)
 
@@ -132,7 +137,7 @@ while go:
 
     interface.master.frame=frame
 
-    d.render(frame)
+    [d.render(frame) for d in devices]
 
     interface.render()
 
