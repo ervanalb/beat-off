@@ -3,14 +3,15 @@ import time
 class Timebase:
     def __init__(self):
         self.freq=0
-        self.lt=time.time()
-        self.lx=0
-
-    def get_str(self):
-        return "{0:.2} BPM".format(self.freq*60)
+        self.ltime=time.time()
+        self.t=0
 
     def get_time(self):
         t=time.time()
-        dt=self.lt-t
-        self.lx+=dt*freq
-        return self.lx
+        dt=t-self.ltime
+        self.ltime=t
+        self.t+=dt*self.freq
+        return self.t
+
+    def sync(self):
+        self.t=0

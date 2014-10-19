@@ -59,7 +59,6 @@ class BankPattern(Element):
         text = font.render(self.bp.pat.name, 1, (255, 255, 255))
         self.surf.blit(text,(5,2))
 
-
 class Slider(Element):
     SIZE=(60,40)
 
@@ -184,6 +183,52 @@ class Pattern(Element):
             return True
         return False
 
+class Metronome(Element):
+    SIZE=(100,100)
+    TEXT_POS=(10,3)
+    TEXT_SIZE=(80,20)
+
+    def __init__(self,timebase):
+        Element.__init__(self)
+        self.tb=timebase
+        self.font = pygame.font.Font(None, 20)
+        self.tempo_drag_start=None
+
+    def get_str(self,freq):
+        return "{0:.2f} BPM".format(freq*60)
+
+    def draw(self):
+        t=self.tb.t%1
+        self.surf.fill((10,10,10))
+        y=int(60-4*(t-t**2)*30)
+        pygame.draw.circle(self.surf,(255,0,0),(10,y),3)
+        pygame.draw.line(self.surf,(20,20,20),(5,63),(15,63))
+        text = self.font.render(self.get_str(self.tb.freq), 1, (255, 255, 255))
+        self.surf.blit(text,self.TEXT_POS)
+
+    def mouse_to_value(self,relpos):
+        (x,y)=sub_pos(relpos,self.tempo_drag_last)
+        self.tempo_drag_last=relpos
+        self.tb.freq+=x/600.
+
+    def mouse(self,relpos,event):
+        if event.type==pygame.MOUSEBUTTONUP:
+            self.tempo_drag_start=None
+            return False
+        if event.type==pygame.MOUSEBUTTONDOWN:
+            if in_rect(relpos,self.TEXT_POS+self.TEXT_SIZE):
+                self.tempo_drag_start=relpos
+                self.tempo_drag_last=(0,0)
+                return True
+            if in_rect(relpos,(0,0)+self.SIZE):
+                self.tb.sync()
+                return True
+        if self.tempo_drag_start is not None and event.type==pygame.MOUSEMOTION:
+            self.mouse_to_value(sub_pos(relpos,self.tempo_drag_start))
+            return True
+        return False
+
+
 class UI(Element):
     SIZE=SCREEN_SIZE
 
@@ -193,7 +238,9 @@ class UI(Element):
     BANK_START=(100,420)
     BANK_INC=(150,0)
 
-    def __init__(self,screen,bank,slots,knobs,alpha_knobs):
+    METRONOME_POS=(1000,50)
+
+    def __init__(self,screen,bank,slots,knobs,alpha_knobs,timebase):
         self.surf=screen
         self.slots=slots
         self.bank=bank
@@ -202,6 +249,7 @@ class UI(Element):
         self.bank_drag_start=None
         self.knobs=knobs
         self.alpha_knobs=alpha_knobs
+        self.metronome=Metronome(timebase)
 
     def draw(self):
         self.master.render(self.surf,(30,100))
@@ -219,6 +267,8 @@ class UI(Element):
 
         elif self.bank_drag_start is not None:
                 self.bank[self.drag_index].render(self.surf,add_pos(element_array(self.BANK_START,self.BANK_INC,self.drag_index),self.drag_pos))
+
+        self.metronome.render(self.surf,self.METRONOME_POS)
 
     def update_knobs(self,slot):
         if self.slots[slot] is not None:
@@ -294,6 +344,10 @@ class UI(Element):
             if self.slots[i] is not None:
                 if self.slots[i].ui.mouse(sub_pos(relpos,corner),event):
                     return True
+
+        # metronome
+        if self.metronome.mouse(sub_pos(relpos,self.METRONOME_POS),event):
+            return True
 
         if event.type==pygame.MOUSEBUTTONDOWN:
             # eject

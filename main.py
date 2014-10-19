@@ -30,6 +30,7 @@ pattern_bank=[patterns.Full,patterns.Segment,patterns.Wave,patterns.Strobe, patt
 ah=audio.AudioHandler()
 
 tb=timebase.Timebase()
+tb.freq=140./60
 
 class Control:
     def __init__(self,name,value=0.0, map_fn=None, display_fn=None):
@@ -67,7 +68,6 @@ class Knob:
     def update(self,value):
         for c in self.controls:
             c.value=value
-
 
 class Slot:
     def __init__(self,pattern):
@@ -121,14 +121,14 @@ for i in range(10):
     except:
         pass
 
-interface=ui.UI(screen,bank,slots,knobs,alpha_knobs)
+interface=ui.UI(screen,bank,slots,knobs,alpha_knobs,tb)
 
 ah.start()
 
 while go:
     framerate.tick(60)
 
-    t=timebase.get_time()
+    t=tb.get_time()
 
     frames=[]
     for slot in slots:
