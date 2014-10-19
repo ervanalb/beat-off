@@ -7,6 +7,7 @@ import ui
 import time
 import nanokontrol
 import audio
+import timebase
 
 pygame.init()
 pygame.midi.init()
@@ -23,6 +24,8 @@ nk_slider_map={'Slider0':0,'Slider1':1,'Slider2':2,'Slider3':3,'Slider4':4,'Slid
 pattern_bank=[patterns.Full,patterns.Segment,patterns.Wave,patterns.Strobe, patterns.Bounce]
 
 ah=audio.AudioHandler()
+
+tb=timebase.Timebase()
 
 class Control:
     def __init__(self,name,value=0.0, map_fn=None, display_fn=None):
@@ -116,7 +119,7 @@ ah.start()
 while go:
     framerate.tick(60)
 
-    t=time.time()
+    t=timebase.get_time()
 
     frames=[]
     for slot in slots:
