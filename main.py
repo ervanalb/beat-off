@@ -105,8 +105,8 @@ lo=Knob('lo')
 mid=Knob('mid')
 hi=Knob('hi')
 glob=[lo,mid,hi]
-nk_knobs=[Knob('NK '+str(i)) for i in range(len(slots))]
-nk_sliders=[Knob('NK S '+str(i)) for i in range(len(slots))]
+nk_knobs=[Knob('NK '+str(i+1)) for i in range(len(slots))]
+nk_sliders=[Knob('NK S '+str(i+1)) for i in range(len(slots))]
 
 def knobs(slot):
     return [None]+[nk_knobs[slot]]+glob
