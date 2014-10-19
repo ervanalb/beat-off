@@ -163,10 +163,10 @@ class Strobe(object):
         else:
             return "1/{}".format(int(1.0 / freq))
 
-    initial_frequency = 1 / 6.
+    initial_frequency = 3 / 6.
 
     def render(self,t,color,frequency,up,down):
-        period=.5
+        period=frequency
         (r,g,b)=mkcolor(color)
         if t>=self.lt+period:
             strip=[(r,g,b,1)]*lightstrip.STRIP_LENGTH
