@@ -136,6 +136,21 @@ class Wave(object):
     def map_gamma(self, g):
         return 0.01 + 6 * g
 
+    @staticmethod
+    def map_velocity(freq):
+        f = int(round(freq * 6))
+        return 2 ** (3 - f)
+
+    @staticmethod
+    def display_velocity(freq):
+        freq = 1.0 / freq
+        if freq >= 1:
+            return str(int(freq))
+        else:
+            return "1/{}".format(int(1.0 / freq))
+
+    initial_frequency = 3 / 6.
+
     def render(self,t,color,frequency,velocity, gamma):
         def f(x):
             return (math.sin(x*2*math.pi)+1)/2
@@ -145,7 +160,8 @@ class Wave(object):
         dt=t-self.lt
         self.lt=t
         fr=frequency*10
-        self.x+=dt*velocity*4*fr
+        
+        self.x+=dt*velocity*fr
         for i in range(lightstrip.STRIP_LENGTH):
             d=float(i)/lightstrip.STRIP_LENGTH
             a=f(d*fr+self.x) ** gamma
