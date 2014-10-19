@@ -56,7 +56,8 @@ class AudioHandler(threading.Thread):
         while self.go:
             for i in range(20):
                 data = self.in_stream.read(self.CHUNK)
-                if not self.in_stream.get_read_available():
+                a=self.in_stream.get_read_available()
+                if a<self.CHUNK:
                     break
             samples = struct.unpack('h'*self.CHUNK,data)
             fft=numpy.fft.rfft(samples)
