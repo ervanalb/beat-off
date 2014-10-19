@@ -1,5 +1,6 @@
 import lightstrip
 import colorsys
+import random
 import math
 
 def mkcolor(h,s=1.,v=1.):
@@ -20,11 +21,15 @@ def mk_yiq_color(phi, y=0.4, kappa=1.9):
     q = abs(c) ** kappa * sign(c)
     return colorsys.yiq_to_rgb(y, i * 0.595, q * 0.522)
 
+mk_initial_color = property(lambda s: random.random())
+
 class Full(object):
     name='full'
     controls=[
         'color', 
     ]
+
+    initial_color = mk_initial_color
 
     def render(self,t,color):
         (r,g,b)=mkcolor(color)
@@ -38,6 +43,8 @@ class Segment(object):
         'start',
         'stop'
     ]
+
+    initial_color = mk_initial_color
 
     def render(self,t,color,start,stop):
         (r,g,b)=mkcolor(color)
@@ -54,19 +61,23 @@ class Bounce(object):
         'size',
         'velocity'
     ]
+    initial_gamma = 0.4
+    initial_color = mk_initial_color
 
     def __init__(self):
         self.lt=0
         self.x=0
-
-    initial_gamma = 0.4
 
     def map_gamma(self, g):
         return 0.01 + 6 * g
 
     def render(self, t, color, size, velocity):
         def f(x):
-            return (math.sin(x*2*math.pi)+1)/2
+            #return (math.sin(x*2*math.pi)+1)/2
+            t = (x % 1.0) * 2
+            if t > 1.0:
+                t = 2.0 - t
+            return t
 
         (r,g,b)=mkcolor(color)
         strip=[]
@@ -96,6 +107,7 @@ class Wave(object):
         'velocity',
         'gamma'
     ]
+    initial_color = mk_initial_color
     initial_gamma = 0.4
     initial_frequency = 0.2
     initial_velocity = 0.2
@@ -132,6 +144,7 @@ class Strobe(object):
         'up',
         'down',
     ]
+    initial_color = mk_initial_color
     initial_up = 0.1
     initial_down = 0.5
 
@@ -177,15 +190,14 @@ class Rainbow(object):
         'Y',
         'kappa',
     ]
-
-    def __init__(self):
-        self.lt=0
-        self.x=0
-
     initial_kappa = 0.4
     initial_Y = 0.4
     initial_velocity = 0.2
     initial_frequency = 0.2
+
+    def __init__(self):
+        self.lt=0
+        self.x=0
 
     def map_kappa(self, k):
         return 0.01 + 6 * k
