@@ -49,7 +49,7 @@ class Segment(object):
     def render(self,t,color,start,stop):
         (r,g,b)=mkcolor(color)
         strip=[(0,0,0,0)]*lightstrip.STRIP_LENGTH
-        ends=(int(start*lightstrip.STRIP_LENGTH),int((1.-stop)*lightstrip.STRIP_LENGTH))
+        ends=(int((1.0- start)*lightstrip.STRIP_LENGTH),int((stop)*lightstrip.STRIP_LENGTH))
         for i in range(min(ends),max(ends)):
             strip[i]=(r,g,b,1)
         return strip
