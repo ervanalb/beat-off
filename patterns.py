@@ -96,12 +96,14 @@ class Wave(object):
         'velocity',
         'gamma'
     ]
+    initial_gamma = 0.4
+    initial_frequency = 0.2
+    initial_velocity = 0.2
 
     def __init__(self):
         self.lt=0
         self.x=0
 
-    initial_gamma = 0.4
 
     def map_gamma(self, g):
         return 0.01 + 6 * g
@@ -130,6 +132,8 @@ class Strobe(object):
         'up',
         'down',
     ]
+    initial_up = 0.1
+    initial_down = 0.5
 
     def __init__(self):
         self.lt=0
@@ -165,3 +169,39 @@ class Strobe(object):
             strip=[(r,g,b,a)]*lightstrip.STRIP_LENGTH
         return strip
 
+class Rainbow(object):
+    name='rainbow'
+    controls=[
+        'frequency',
+        'velocity',
+        'Y',
+        'kappa',
+    ]
+
+    def __init__(self):
+        self.lt=0
+        self.x=0
+
+    initial_kappa = 0.4
+    initial_Y = 0.4
+    initial_velocity = 0.2
+    initial_frequency = 0.2
+
+    def map_kappa(self, k):
+        return 0.01 + 6 * k
+
+    def render(self,t,frequency,velocity, Y, kappa):
+        def f(x):
+            return x % 1.0
+
+        strip=[]
+        dt=t-self.lt
+        self.lt=t
+        fr=frequency*10
+        self.x+=dt*velocity*4*fr
+        for i in range(lightstrip.STRIP_LENGTH):
+            d=float(i)/lightstrip.STRIP_LENGTH
+            pos = f(d*fr+self.x)
+            r,g,b = mk_yiq_color(pos, y=Y, kappa=kappa)
+            strip.append((r,g,b,1.0))
+        return strip
