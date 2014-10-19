@@ -7,6 +7,11 @@ from collections import deque
 def lpf(data,mem,alpha):
     return mem+alpha*(data-mem)
 
+def diode_lpf(data,mem,alpha):
+    if data > mem:
+        return data
+    return mem+alpha*(data-mem)
+
 def agc(data,hist,memory):
     hist.append(data)
     if len(hist)>memory:
@@ -23,7 +28,7 @@ class AudioHandler(threading.Thread):
     CHANNELS = 1
     RATE = 48000
     RANGES = [(20,200),(200,1200),(1200,2400)]
-    ALPHA = 0.5
+    ALPHA = 0.1
     MEMORY = 2000
 
     def __init__(self):
@@ -62,7 +67,7 @@ class AudioHandler(threading.Thread):
                 out.append(result)
 
             for i in range(len(self.RANGES)):
-                out[i]=lpf(out[i],out_mem[i],self.ALPHA)
+                out[i]=diode_lpf(out[i],out_mem[i],self.ALPHA)
                 out_mem[i]=out[i]
                 out[i]=agc(out[i],out_hist[i],self.MEMORY)
 
