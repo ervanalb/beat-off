@@ -249,3 +249,25 @@ class Rainbow(object):
             r,g,b = mk_yiq_color(pos, y=Y, kappa=kappa)
             strip.append((r,g,b,1.0))
         return strip
+
+class Twinkle(object):
+    name='twinkle'
+    controls=[
+        'color',
+        'attack',
+        'decay',
+    ]
+    def __init__(self):
+        self.lt=0
+        self.x=0
+        self.alphas = [0.0] * range(lightstrip.STRIP_LENGTH)
+
+    def render(self,t,color,attack, decay):
+        strip = []
+        dt=t-self.lt
+        self.lt=t
+        #TODO
+        for i in range(lightstrip.STRIP_LENGTH):
+            (r,g,b)=mkcolor(color)
+            strip.append((r, g, b, self.alphas[i]))
+        return strip
