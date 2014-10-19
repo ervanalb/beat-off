@@ -59,7 +59,7 @@ class Bounce(object):
     controls=[
         'color',
         'size',
-        'velocity'
+        'frequency'
     ]
     initial_gamma = 0.4
     initial_color = mk_initial_color
@@ -71,7 +71,23 @@ class Bounce(object):
     def map_gamma(self, g):
         return 0.01 + 6 * g
 
-    def render(self, t, color, size, velocity):
+    @staticmethod
+    def map_frequency(freq):
+        f = int(round(freq * 6))
+        return 2 ** (3 - f)
+
+    @staticmethod
+    def display_frequency(freq):
+        freq = 1.0 / freq
+        if freq >= 1:
+            return str(int(freq))
+        else:
+            return "1/{}".format(int(1.0 / freq))
+
+    initial_frequency = 3 / 6.
+
+
+    def render(self, t, color, size, frequency):
         def f(x):
             #return (math.sin(x*2*math.pi)+1)/2
             t = (x % 1.0) * 2
@@ -83,7 +99,7 @@ class Bounce(object):
         strip=[]
         dt=t-self.lt
         self.lt=t
-        self.x+=dt*velocity
+        self.x+=dt*frequency
         
         pos = f(self.x) * (1.0 - size) 
         strip=[(0,0,0,0)]*lightstrip.STRIP_LENGTH
