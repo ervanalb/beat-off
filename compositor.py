@@ -6,7 +6,7 @@ def composite(frames):
         o_r=0
         o_g=0
         o_b=0
-        for (f,f_a) in frames:
+        for (f,f_a) in frames[::-1]: # 1st frame should be 'on top'
             (r,g,b,a)=f[i]
             a*=f_a
             o_r=o_r*(1-a)+r*a
