@@ -73,7 +73,7 @@ class Bounce(object):
 
     @staticmethod
     def map_frequency(freq):
-        f = int(round(freq * 6))
+        f = int(round((1.0 - freq)* 6))
         return 2 ** (3 - f)
 
     @staticmethod
@@ -138,7 +138,7 @@ class Wave(object):
 
     @staticmethod
     def map_velocity(freq):
-        f = int(round(freq * 8))
+        f = int(round((1.0 - freq)* 8))
         return 2 ** (3 - f)
 
     @staticmethod
@@ -185,7 +185,7 @@ class Strobe(object):
 
     @staticmethod
     def map_frequency(freq):
-        f = int(round(freq * 6))
+        f = int(round((1.0 - freq) * 6))
         return 2 ** (f - 3)
 
     @staticmethod
