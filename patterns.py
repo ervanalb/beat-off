@@ -138,7 +138,7 @@ class Wave(object):
 
     @staticmethod
     def map_velocity(freq):
-        f = int(round(freq * 6))
+        f = int(round(freq * 8))
         return 2 ** (3 - f)
 
     @staticmethod
@@ -149,7 +149,7 @@ class Wave(object):
         else:
             return "1/{}".format(int(1.0 / freq))
 
-    initial_frequency = 3 / 6.
+    initial_velocity = 4 / 8.
 
     def render(self,t,color,frequency,velocity, gamma):
         def f(x):
