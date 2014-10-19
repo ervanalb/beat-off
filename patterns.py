@@ -1,10 +1,17 @@
 import lightstrip
 import colorsys
+import random
 import math
 
 def mkcolor(h,s=1.,v=1.):
-    return mk_yiq_color(h)
-    #return colorsys.hsv_to_rgb(h,s,v)
+    #return mk_yiq_color(h)
+    ENDSZ = 0.02
+    if h < ENDSZ:
+        return (0., 0., 0.)
+    elif h > (1.0 - ENDSZ):
+        return (1., 1., 1.)
+    h = (h - ENDSZ) / (1.0 - 2 * ENDSZ)
+    return colorsys.hsv_to_rgb(h,s,v)
 
 def mk_yiq_color(phi, y=0.4, kappa=1.9):
     sign = lambda x: -1 if x < 0 else 1
@@ -14,11 +21,15 @@ def mk_yiq_color(phi, y=0.4, kappa=1.9):
     q = abs(c) ** kappa * sign(c)
     return colorsys.yiq_to_rgb(y, i * 0.595, q * 0.522)
 
+mk_initial_color = property(lambda s: random.random())
+
 class Full(object):
     name='full'
     controls=[
         'color', 
     ]
+
+    initial_color = mk_initial_color
 
     def render(self,t,color):
         (r,g,b)=mkcolor(color)
@@ -32,6 +43,8 @@ class Segment(object):
         'start',
         'stop'
     ]
+
+    initial_color = mk_initial_color
 
     def render(self,t,color,start,stop):
         (r,g,b)=mkcolor(color)
@@ -48,19 +61,23 @@ class Bounce(object):
         'size',
         'velocity'
     ]
+    initial_gamma = 0.4
+    initial_color = mk_initial_color
 
     def __init__(self):
         self.lt=0
         self.x=0
-
-    initial_gamma = 0.4
 
     def map_gamma(self, g):
         return 0.01 + 6 * g
 
     def render(self, t, color, size, velocity):
         def f(x):
-            return (math.sin(x*2*math.pi)+1)/2
+            #return (math.sin(x*2*math.pi)+1)/2
+            t = (x % 1.0) * 2
+            if t > 1.0:
+                t = 2.0 - t
+            return t
 
         (r,g,b)=mkcolor(color)
         strip=[]
@@ -90,12 +107,15 @@ class Wave(object):
         'velocity',
         'gamma'
     ]
+    initial_color = mk_initial_color
+    initial_gamma = 0.4
+    initial_frequency = 0.2
+    initial_velocity = 0.2
 
     def __init__(self):
         self.lt=0
         self.x=0
 
-    initial_gamma = 0.4
 
     def map_gamma(self, g):
         return 0.01 + 6 * g
@@ -124,32 +144,76 @@ class Strobe(object):
         'up',
         'down',
     ]
+    initial_color = mk_initial_color
+    initial_up = 0.1
+    initial_down = 0.5
 
     def __init__(self):
         self.lt=0
-        self.lx=0
-        self.x=0
+
+    @staticmethod
+    def map_frequency(freq):
+        f = int(round(freq * 6))
+        return 2 ** (f - 3)
+
+    @staticmethod
+    def display_frequency(freq):
+        if freq >= 1:
+            return str(int(freq))
+        else:
+            return "1/{}".format(int(1.0 / freq))
+
+    initial_frequency = 1 / 6.
 
     def render(self,t,color,frequency,up,down):
-        dt=t-self.lt
-        self.lt=t
-        x=self.x+dt*frequency*4
-        period=1
-        self.x=x
-        #print x
-
+        period=.5
         (r,g,b)=mkcolor(color)
-        if x>=self.lx+period:
+        if t>=self.lt+period:
             strip=[(r,g,b,1)]*lightstrip.STRIP_LENGTH
-            self.lx=math.floor(x/period)*period
+            self.lt=math.floor(t/period)*period
         else:
-            nx=(math.ceil(x/period)*period-x)/period
-            px=(x-math.floor(x/period)*period)/period
+            nt=(math.ceil(t/period)*period-t)/period
+            pt=(t-math.floor(t/period)*period)/period
             a=0
-            if up > 0 and nx < up:
-                a+=1-nx/up
-            if down > 0 and px < down:
-                a+=1-px/down
+            if up > 0 and nt < up:
+                a+=1-nt/up
+            if down > 0 and pt < down:
+                a+=1-pt/down
             strip=[(r,g,b,a)]*lightstrip.STRIP_LENGTH
         return strip
 
+class Rainbow(object):
+    name='rainbow'
+    controls=[
+        'frequency',
+        'velocity',
+        'Y',
+        'kappa',
+    ]
+    initial_kappa = 0.4
+    initial_Y = 0.4
+    initial_velocity = 0.2
+    initial_frequency = 0.2
+
+    def __init__(self):
+        self.lt=0
+        self.x=0
+
+    def map_kappa(self, k):
+        return 0.01 + 6 * k
+
+    def render(self,t,frequency,velocity, Y, kappa):
+        def f(x):
+            return x % 1.0
+
+        strip=[]
+        dt=t-self.lt
+        self.lt=t
+        fr=frequency*10
+        self.x+=dt*velocity*4*fr
+        for i in range(lightstrip.STRIP_LENGTH):
+            d=float(i)/lightstrip.STRIP_LENGTH
+            pos = f(d*fr+self.x)
+            r,g,b = mk_yiq_color(pos, y=Y, kappa=kappa)
+            strip.append((r,g,b,1.0))
+        return strip

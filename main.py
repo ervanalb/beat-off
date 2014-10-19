@@ -25,7 +25,7 @@ except nanokontrol.NanoKontrol2.NoDeviceException:
 nk_knob_map={'Knob0':0,'Knob1':1,'Knob2':2,'Knob3':3,'Knob4':4,'Knob5':5,'Knob6':6,'Knob7':7}
 nk_slider_map={'Slider0':0,'Slider1':1,'Slider2':2,'Slider3':3,'Slider4':4,'Slider5':5,'Slider6':6,'Slider7':7}
 
-pattern_bank=[patterns.Full,patterns.Segment,patterns.Wave,patterns.Strobe, patterns.Bounce]
+pattern_bank=[patterns.Full,patterns.Segment,patterns.Wave,patterns.Strobe, patterns.Bounce, patterns.Rainbow]
 
 ah=audio.AudioHandler()
 
@@ -38,14 +38,14 @@ class Control:
         self.value=value
         self.knob=None
         nop = lambda x: x
-        self.map_fn = map_fn or nop
-        self.display_fn = display_fn or nop
+        self.map_fn = map_fn or (lambda x: x)
+        self.display_fn = display_fn or (lambda x: "{:0.2f}".format(x))
 
     def to_pair(self):
         return (self.name, self.map_fn(self.value))
 
     def display_value(self):
-        return self.display_fn(self.value)
+        return self.display_fn(self.map_fn(self.value))
 
     def set_knob(self,knob):
         if self.knob is not None:
@@ -75,8 +75,8 @@ class Slot:
         nop = lambda x: x
         self.controls = []
         for control in pattern.controls:
-            map_fn = getattr(pattern, "map_{}".format(control), nop)
-            display_fn = getattr(pattern, "display_{}".format(control), nop)
+            map_fn = getattr(pattern, "map_{}".format(control), None)
+            display_fn = getattr(pattern, "display_{}".format(control), None)
             initial = getattr(pattern, "initial_{}".format(control), 0.0)
             self.controls.append(Control(control, value=initial, map_fn=map_fn, display_fn=display_fn))
         self.alpha_control = Control('alpha')
@@ -118,10 +118,14 @@ devices = []
 for i in range(10):
     try:
         d = device.LuxDevice("/dev/ttyUSB%d" % i)
-    except:
+        devices.append(d)
+    except Exception as e:
+        print i, e
         pass
+print "Found %d devices" % len(devices)
 
 interface=ui.UI(screen,bank,slots,knobs,alpha_knobs,tb)
+
 
 ah.start()
 
