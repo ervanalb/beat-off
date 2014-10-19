@@ -54,7 +54,10 @@ class AudioHandler(threading.Thread):
         out_hist=[deque() for i in range(len(self.RANGES))]
 
         while self.go:
-            data = self.in_stream.read(self.CHUNK)
+            for i in range(20):
+                data = self.in_stream.read(self.CHUNK)
+                if not self.in_stream.get_read_available():
+                    break
             samples = struct.unpack('h'*self.CHUNK,data)
             fft=numpy.fft.rfft(samples)
             fft=abs(fft)**2
