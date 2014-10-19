@@ -35,7 +35,7 @@ class Control:
         self.knob=None
         nop = lambda x: x
         self.map_fn = map_fn or (lambda x: x)
-        self.display_fn = display_fn or (lambda x: "{:0.2}".format(x))
+        self.display_fn = display_fn or (lambda x: "{:0.2f}".format(x))
 
     def to_pair(self):
         return (self.name, self.map_fn(self.value))

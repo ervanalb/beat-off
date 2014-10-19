@@ -128,6 +128,20 @@ class Strobe(object):
     def __init__(self):
         self.lt=0
 
+    @staticmethod
+    def map_frequency(freq):
+        f = int(round(freq * 6))
+        return 2 ** (f - 3)
+
+    @staticmethod
+    def display_frequency(freq):
+        if freq >= 1:
+            return str(int(freq))
+        else:
+            return "1/{}".format(int(1.0 / freq))
+
+    initial_frequency = 1 / 6.
+
     def render(self,t,color,frequency,up,down):
         period=.5
         (r,g,b)=mkcolor(color)
