@@ -28,7 +28,7 @@ class AudioHandler(threading.Thread):
     CHANNELS = 1
     RATE = 48000
     RANGES = [(20,200),(200,1200),(1200,2400)]
-    ALPHA = 0.1
+    ALPHA = 0.2
     MEMORY = 2000
 
     def __init__(self):
