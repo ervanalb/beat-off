@@ -5,11 +5,11 @@ import math
 
 def mkcolor(h,s=1.,v=1.):
     #return mk_yiq_color(h)
-    ENDSZ = 0.02
+    ENDSZ = 0.07
     if h < ENDSZ:
-        return (0., 0., 0.)
+        return (h / ENDSZ, 0., 0.)
     elif h > (1.0 - ENDSZ):
-        return (1., 1., 1.)
+        return (1., (h - (1.0 - ENDSZ)) / ENDSZ, 1.)
     h = (h - ENDSZ) / (1.0 - 2 * ENDSZ)
     return colorsys.hsv_to_rgb(h,s,v)
 
