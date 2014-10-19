@@ -3,8 +3,8 @@ import colorsys
 import math
 
 def mkcolor(h,s=1.,v=1.):
-    return mk_yiq_color(h)
-    #return colorsys.hsv_to_rgb(h,s,v)
+    #return mk_yiq_color(h)
+    return colorsys.hsv_to_rgb(h,s,v)
 
 def mk_yiq_color(phi, y=0.4, kappa=1.9):
     sign = lambda x: -1 if x < 0 else 1
@@ -127,29 +127,21 @@ class Strobe(object):
 
     def __init__(self):
         self.lt=0
-        self.lx=0
-        self.x=0
 
     def render(self,t,color,frequency,up,down):
-        dt=t-self.lt
-        self.lt=t
-        x=self.x+dt*frequency*4
-        period=1
-        self.x=x
-        #print x
-
+        period=.5
         (r,g,b)=mkcolor(color)
-        if x>=self.lx+period:
+        if t>=self.lt+period:
             strip=[(r,g,b,1)]*lightstrip.STRIP_LENGTH
-            self.lx=math.floor(x/period)*period
+            self.lt=math.floor(t/period)*period
         else:
-            nx=(math.ceil(x/period)*period-x)/period
-            px=(x-math.floor(x/period)*period)/period
+            nt=(math.ceil(t/period)*period-t)/period
+            pt=(t-math.floor(t/period)*period)/period
             a=0
-            if up > 0 and nx < up:
-                a+=1-nx/up
-            if down > 0 and px < down:
-                a+=1-px/down
+            if up > 0 and nt < up:
+                a+=1-nt/up
+            if down > 0 and pt < down:
+                a+=1-pt/down
             strip=[(r,g,b,a)]*lightstrip.STRIP_LENGTH
         return strip
 

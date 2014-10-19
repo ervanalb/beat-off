@@ -61,15 +61,16 @@ class BankPattern(Element):
 
 
 class Slider(Element):
-    SIZE=(60,40)
+    SIZE=(60,55)
 
     SLIDER_LENGTH=54
     SLIDER_THICKNESS=10
+    SLIDER_HEIGHT = 42
 
     KNOB_POS=(5,15)
     KNOB_SIZE=(50,15)
 
-    def __init__(self,control,knobs=[None], map_fn=None, display_fn=None):
+    def __init__(self,control,knobs=[None]):
         Element.__init__(self)
         self.control=control
         self.slot_drag_start=None
@@ -78,8 +79,6 @@ class Slider(Element):
         self.knob_index=0
         nop = lambda x: x
         # Not great, should test `is None` of `map_fn`, but fns are always truthy
-        self.map_fn = map_fn or nop 
-        self.display_fn = display_fn or nop 
 
         self.font = pygame.font.Font(None, 15)
         self.text = self.font.render(self.control.name, 1, (255, 255, 255))
@@ -95,7 +94,7 @@ class Slider(Element):
             self.knob_name=self.font.render(self.control.knob.name,1,(255,255,255))
 
     def handle_rect(self):
-        return (3+self.control.value*(self.SLIDER_LENGTH-self.SLIDER_THICKNESS),28,self.SLIDER_THICKNESS,10)
+        return (3+self.control.value*(self.SLIDER_LENGTH-self.SLIDER_THICKNESS), self.SLIDER_HEIGHT,self.SLIDER_THICKNESS,10)
 
     def mouse_to_value(self,(x,y)):
         v=self.value_start+float(x)/(self.SLIDER_LENGTH-self.SLIDER_THICKNESS)
@@ -110,7 +109,11 @@ class Slider(Element):
         if knob is not None:
             self.surf.blit(self.knob_name,self.KNOB_POS)
 
-        pygame.draw.rect(self.surf,(20,20,20),(3,32,self.SLIDER_LENGTH,3))
+        self.value_text = self.font.render(self.control.display_value(), 1, (255, 255, 255))
+        self.surf.blit(self.value_text,(5,28))
+
+
+        pygame.draw.rect(self.surf,(20,20,20),(3,self.SLIDER_HEIGHT + 4,self.SLIDER_LENGTH,3))
         pygame.draw.rect(self.surf,(0,0,60),self.handle_rect())
 
     def mouse(self,relpos,event):
@@ -136,12 +139,12 @@ class Slider(Element):
         return False
 
 class Pattern(Element):
-    SIZE=(100,300)
+    SIZE=(100,350)
 
     SLIDER_START=(20,30)
-    SLIDER_INC=(0,50)
+    SLIDER_INC=(0,62)
 
-    ALPHA_SLIDER_POS=(10,240)
+    ALPHA_SLIDER_POS=(10,290)
 
     EJECT=(85,10)
     EJECT_SIZE=(10,10)
@@ -190,7 +193,7 @@ class UI(Element):
     SLOT_START=(100,100)
     SLOT_INC=(110,0)
 
-    BANK_START=(100,420)
+    BANK_START=(100,470)
     BANK_INC=(150,0)
 
     def __init__(self,screen,bank,slots,knobs,alpha_knobs):
