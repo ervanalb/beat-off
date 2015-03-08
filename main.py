@@ -8,6 +8,7 @@ import time
 import nanokontrol
 import audio
 import timebase
+import newlux
 
 pygame.init()
 pygame.midi.init()
@@ -31,6 +32,8 @@ ah=audio.AudioHandler()
 
 tb=timebase.Timebase()
 tb.freq=140./60
+
+NUMSLOTS = 8
 
 class Control:
     def __init__(self,name,value=0.0, map_fn=None, display_fn=None):
@@ -98,22 +101,20 @@ class BankPattern:
     def make(self):
         return Slot(self.pat())
 
-bank = [BankPattern(p) for p in pattern_bank]
-slots = [None]*8
+luxbus = None
+for i in range(3):
+    try: 
+        luxbus = newlux.LuxBus("/dev/ttyUSB%d" % i)
+    except Exception as e:
+        print i, e
+        pass
+if luxbus is None:
+    print "No lux bus found"
+else:
+    print "Lux bus found"
 
-lo=Knob('lo')
-mid=Knob('mid')
-hi=Knob('hi')
-glob=[lo,mid,hi]
-nk_knobs=[Knob('NK '+str(i+1)) for i in range(len(slots))]
-nk_sliders=[Knob('NK S '+str(i+1)) for i in range(len(slots))]
 
-def knobs(slot):
-    return [None]+[nk_knobs[slot]]+glob
-
-def alpha_knobs(slot):
-    return [nk_sliders[slot]]
-
+"""
 devices = []
 for i in range(10):
     try:
@@ -123,8 +124,39 @@ for i in range(10):
         print i, e
         pass
 print "Found %d devices" % len(devices)
+"""
 
-interface=ui.UI(screen,bank,slots,knobs,alpha_knobs,tb)
+class StripGroup(object):
+    def __init__(self, devs, ids, name):
+        self.bank = [BankPattern(p) for p in pattern_bank]
+        self.slots = [None]*NUMSLOTS
+        #self.devices = [devices[i] for i in devs if i < len(devices)]
+        if luxbus is not None:
+            self.devices = [newlux.LEDStrip(luxbus, i, 50) for i in ids]
+            print "initialized devices: ", map(hex, ids)
+        else:
+            self.devices = []
+        self.name = name
+        self.is_active = False
+
+#groups = [StripGroup([0], [0xF], "main"), StripGroup([0], [0xF0], "background"), StripGroup([0], [0xF00], "underglow")]
+groups = [StripGroup([0], [0xFF], "main")]
+
+lo=Knob('lo')
+mid=Knob('mid')
+hi=Knob('hi')
+glob=[lo,mid,hi]
+nk_knobs=[Knob('NK '+str(i+1)) for i in range(NUMSLOTS)]
+nk_sliders=[Knob('NK S '+str(i+1)) for i in range(NUMSLOTS)]
+
+def knobs(slot):
+    return [None]+[nk_knobs[slot]]+glob
+
+def alpha_knobs(slot):
+    return [nk_sliders[slot]]
+
+#interface=ui.UI(screen,bank,slots,knobs,alpha_knobs,tb)
+interface=ui.UI(screen,groups,knobs,alpha_knobs,tb)
 
 
 ah.start()
@@ -134,17 +166,20 @@ while go:
 
     t=tb.get_time()
 
-    frames=[]
-    for slot in slots:
-        if slot is not None:
-            slot.update_pattern(t)
-            frames.append((slot.frame,slot.alpha_control.value))
+    for group in groups:
+        frames=[]
+        for slot in group.slots:
+            if slot is not None:
+                slot.update_pattern(t)
+                frames.append((slot.frame,slot.alpha_control.value))
 
-    frame = compositor.composite(frames)
+        frame = compositor.composite(frames)
+        [d.send_frame(frame) for d in group.devices]
+        time.sleep(0.003)
 
-    interface.master.frame=frame
+        if group.is_active:
+            interface.master.frame=frame
 
-    [d.render(frame) for d in devices]
 
     interface.render()
 
@@ -167,5 +202,7 @@ while go:
         if event.type in [pygame.MOUSEBUTTONUP,pygame.MOUSEBUTTONDOWN,pygame.MOUSEMOTION]:
             relpos=event.pos
             interface.mouse(relpos,event)
+        if event.type in [pygame.KEYDOWN]:
+            interface.keydown(event.key)
 
 ah.stop()

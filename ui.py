@@ -243,16 +243,36 @@ class UI(Element):
 
     METRONOME_POS=(1000,50)
 
-    def __init__(self,screen,bank,slots,knobs,alpha_knobs,timebase):
+    def __init__(self,screen,groups,knobs,alpha_knobs,timebase):
         self.surf=screen
-        self.slots=slots
-        self.bank=bank
+        self.groups = groups
+        #self.slots=slots
+        #self.bank=bank
+        self.slots = self.groups[0].slots
+        self.bank = self.groups[0].bank
+        self.devices = self.groups[0].devices
+        self.groups[0].is_active = True
         self.master=Frame()
         self.slot_drag_start=None
         self.bank_drag_start=None
         self.knobs=knobs
         self.alpha_knobs=alpha_knobs
         self.metronome=Metronome(timebase)
+
+    def keydown(self, key):
+        keymap = {
+            pygame.K_1: 0,
+            pygame.K_2: 1,
+            pygame.K_3: 2,
+        }
+        if key in keymap:
+            i = keymap[key]
+            self.slots = self.groups[i].slots
+            self.bank = self.groups[i].bank
+            self.devices = self.groups[i].devices
+            for g in self.groups:
+                g.is_active = False
+            self.groups[i].is_active = True
 
     def draw(self):
         self.master.render(self.surf,(30,100))
